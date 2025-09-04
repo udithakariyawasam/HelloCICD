@@ -23,7 +23,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    def DEPLOY_DIR = "/rocky"
+                    def DEPLOY_DIR = "/home/rocky"
 
                     echo "Deploying locally on Jenkins server into ${DEPLOY_DIR}..."
 
