@@ -12,7 +12,7 @@ pipeline {
         stage('Run Script') {
             steps {
                 echo "🚀 Running Python script..."
-                sh "python3 hello.py > output.txt"
+                sh "python3 hello-world.py > output.txt"
             }
         }
 
