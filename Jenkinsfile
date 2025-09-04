@@ -2,20 +2,14 @@ pipeline {
     agent any
 
     parameters {
-        choice(
-            choices: ['i-01f8cfb9e599102c9', 'i-0d37cafbc2530ce37']
-        )
-    }
-
-    environment {
-        DEPLOY_DIR = "/rocky"
+        choice(name: 'INSTANCE_ID', choices: ['i-01f8cfb9e599102c9', 'i-0d37cafbc2530ce37'], description: 'Select EC2 Instance ID to deploy to')
     }
 
     stages {
         stage('Build') {
             steps {
                 echo 'Running Hello World script...'
-                sh 'python3 hello_world.py > output.txt'
+                sh 'python3 hello-world.py > output.txt'
             }
         }
 
@@ -26,26 +20,31 @@ pipeline {
             }
         }
 
+        stage('Get Server IP') {
+            steps {
+                echo "Fetching IP for instance ${params.INSTANCE_ID}..."
+                // Requires AWS CLI configured on Jenkins
+                sh '''
+                    SERVER_IP=$(aws ec2 describe-instances \
+                        --instance-ids ${INSTANCE_ID} \
+                        --query "Reservations[0].Instances[0].PublicIpAddress" \
+                        --output text)
+                    echo "SERVER_IP=$SERVER_IP" > server_info.env
+                '''
+            }
+        }
+
         stage('Deploy') {
             steps {
-                script {
-                    def servers = [
-                        server1: [user: 'ec2-user', ip: '172.31.6.203'],
-                        server2: [user: 'root', ip: '192.168.1.50']
-                    ]
+                echo "Deploying to EC2 instance ${params.INSTANCE_ID}..."
+                sh '''
+                    source server_info.env
+                    SERVER_USER=ec2-user
+                    DEPLOY_DIR="/rocky"
 
-                    def target = servers[params.SERVER_ID]
-
-                    if (target == null) {
-                        error "Unknown SERVER_ID: ${params.SERVER_ID}"
-                    }
-
-                    echo "Deploying to ${params.SERVER_ID} at ${target.ip}"
-                    sh """
-                        ssh -o StrictHostKeyChecking=no ${target.user}@${target.ip} "mkdir -p ${DEPLOY_DIR}"
-                        scp -o StrictHostKeyChecking=no -r * ${target.user}@${target.ip}:${DEPLOY_DIR}/
-                    """
-                }
+                    ssh -o StrictHostKeyChecking=no $SERVER_USER@$SERVER_IP "mkdir -p $DEPLOY_DIR"
+                    scp -o StrictHostKeyChecking=no -r * $SERVER_USER@$SERVER_IP:$DEPLOY_DIR/
+                '''
             }
         }
     }
