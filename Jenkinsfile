@@ -23,13 +23,13 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    def DEPLOY_DIR = "/home/rocky"
+                    def DEPLOY_DIR = "/var/lib/jenkins/rocky"
 
                     echo "Deploying locally on Jenkins server into ${DEPLOY_DIR}..."
 
                     sh """
                         mkdir -p ${DEPLOY_DIR}
-                        sudo cp hello_world.py test_hello_world.py output.txt ${DEPLOY_DIR}/
+                        cp hello_world.py test_hello_world.py output.txt ${DEPLOY_DIR}/
                     """
                 }
             }
