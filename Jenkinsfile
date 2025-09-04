@@ -29,7 +29,7 @@ pipeline {
 
                     sh """
                         mkdir -p ${DEPLOY_DIR}
-                        cp hello_world.py test_hello_world.py output.txt ${DEPLOY_DIR}/
+                        cp hello_world.py test_hello.py output.txt ${DEPLOY_DIR}/
                     """
                 }
             }
