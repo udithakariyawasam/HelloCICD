@@ -23,7 +23,7 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Fetch private IP of the EC2 instance
+                    // Get private IP of EC2
                     def SERVER_IP = sh(
                         script: """
                             aws ec2 describe-instances \
@@ -36,12 +36,12 @@ pipeline {
 
                     echo "Deploying to EC2 instance ${params.INSTANCE_ID} with private IP ${SERVER_IP}..."
 
-                    // Copy files into /rocky/ on the target server
-                    sshagent (credentials: ['ec2-ssh-key']) {
+                    // Use credentials securely
+                    withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
                         sh """
                             DEPLOY_DIR="/rocky"
-                            ssh -o StrictHostKeyChecking=no ec2-user@${SERVER_IP} "mkdir -p \$DEPLOY_DIR"
-                            scp -o StrictHostKeyChecking=no hello_world.py test_hello_world.py output.txt ec2-user@${SERVER_IP}:\$DEPLOY_DIR/
+                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no ec2-user@${SERVER_IP} "mkdir -p \$DEPLOY_DIR"
+                            scp -i $SSH_KEY -o StrictHostKeyChecking=no hello_world.py test_hello_world.py output.txt ec2-user@${SERVER_IP}:\$DEPLOY_DIR/
                         """
                     }
                 }
