@@ -2,34 +2,25 @@ pipeline {
     agent any
 
     stages {
-        stage('Checkout') {
+        stage('Build') {
             steps {
-                echo "📥 Pulling code from GitHub..."
-                checkout scm
+                echo 'Running Hello World script...'
+                sh 'python3 hello.py > output.txt'
             }
         }
 
-        stage('Run Script') {
+        stage('Test') {
             steps {
-                echo "🚀 Running Python script..."
-                sh "python3 hello-world.py > output.txt"
-            }
-        }
-
-        stage('Archive Results') {
-            steps {
-                echo "📦 Saving output..."
-                archiveArtifacts artifacts: 'output.txt', followSymlinks: false
+                echo 'Running unit tests...'
+                sh 'pytest --maxfail=1 --disable-warnings -q'
             }
         }
     }
 
     post {
-        success {
-            echo "✅ Pipeline finished successfully!"
-        }
-        failure {
-            echo "❌ Pipeline failed!"
+        always {
+            archiveArtifacts artifacts: 'output.txt', followSymlinks: false
         }
     }
 }
+
