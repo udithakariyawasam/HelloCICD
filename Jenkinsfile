@@ -23,27 +23,14 @@ pipeline {
         stage('Deploy') {
             steps {
                 script {
-                    // Get private IP of EC2
-                    def SERVER_IP = sh(
-                        script: """
-                            aws ec2 describe-instances \
-                                --instance-ids ${params.INSTANCE_ID} \
-                                --query 'Reservations[0].Instances[0].PrivateIpAddress' \
-                                --output text
-                        """,
-                        returnStdout: true
-                    ).trim()
+                    def DEPLOY_DIR = "/rocky"
 
-                    echo "Deploying to EC2 instance ${params.INSTANCE_ID} with private IP ${SERVER_IP}..."
+                    echo "Deploying locally on Jenkins server into ${DEPLOY_DIR}..."
 
-                    // Use credentials securely
-                    withCredentials([sshUserPrivateKey(credentialsId: 'ec2-ssh-key', keyFileVariable: 'SSH_KEY')]) {
-                        sh """
-                            DEPLOY_DIR="/rocky"
-                            ssh -i $SSH_KEY -o StrictHostKeyChecking=no ec2-user@${SERVER_IP} "mkdir -p \$DEPLOY_DIR"
-                            scp -i $SSH_KEY -o StrictHostKeyChecking=no hello_world.py test_hello_world.py output.txt ec2-user@${SERVER_IP}:\$DEPLOY_DIR/
-                        """
-                    }
+                    sh """
+                        mkdir -p ${DEPLOY_DIR}
+                        cp hello_world.py test_hello_world.py output.txt ${DEPLOY_DIR}/
+                    """
                 }
             }
         }
